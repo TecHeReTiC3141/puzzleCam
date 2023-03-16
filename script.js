@@ -17,6 +17,8 @@ let SIZE = {
 let PIECES = [];
 const SCALER = .8;
 
+let SELECTED_SEGMENT = null;
+
 function getPosAndSize() {
     let resizer = SCALER * Math.min(
         window.innerWidth / VIDEO.videoWidth,
@@ -36,6 +38,8 @@ camPromise.then(signal => {
     VIDEO.addEventListener('loadeddata', () => {
         getPosAndSize();
         initiatePieces(SIZE.rows, SIZE.columns);
+        randomizePosition();
+        addEventListeners();
         console.log(PIECES);
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
@@ -43,8 +47,8 @@ camPromise.then(signal => {
             getPosAndSize()
         });
         updateCanvas();
-
     });
+
 
 }).catch(err => {
     console.log(`Camera error: ${err}`);
@@ -59,7 +63,6 @@ function updateCanvas() {
         p.draw(context);
     })
     window.requestAnimationFrame(updateCanvas);
-
 }
 
 function initiatePieces(rows, cols) {
@@ -77,27 +80,88 @@ function randomizePosition() {
     PIECES.forEach(p => {
         p.x = Math.random() * (canvas.width - p.width);
         p.y = Math.random() * (canvas.height - p.height);
+        p.isCorrect = false;
     });
+}
+
+function getSelected(event) {
+    for (let p of PIECES) {
+        if (!p.isCorrect &&
+            p.x <= event.x && event.x <= p.x + p.width
+            && p.y <= event.y && event.y <= p.y + p.height) {
+            return p;
+        }
+    }
+    return null;
+}
+
+function mouseDownEvent(event) {
+    SELECTED_SEGMENT = getSelected(event);
+    if (SELECTED_SEGMENT != null) {
+        SELECTED_SEGMENT.offset = {
+            x: event.x - SELECTED_SEGMENT.x,
+            y: event.y - SELECTED_SEGMENT.y,
+        }
+    }
+}
+
+function mouseMoveEvent(event) {
+    if (SELECTED_SEGMENT != null) {
+        SELECTED_SEGMENT.x = event.x - SELECTED_SEGMENT.offset.x;
+        SELECTED_SEGMENT.y = event.y - SELECTED_SEGMENT.offset.y;
+    }
+}
+
+function mouseUpEvent() {
+    if (SELECTED_SEGMENT instanceof Piece && SELECTED_SEGMENT.isClose()) {
+        SELECTED_SEGMENT.isCorrect = true;
+    }
+    SELECTED_SEGMENT = null;
+}
+
+function addEventListeners() {
+    canvas.addEventListener('mousedown', mouseDownEvent);
+    canvas.addEventListener('mousemove', mouseMoveEvent);
+    canvas.addEventListener('mouseup', mouseUpEvent);
 }
 
 
 class Piece {
+    errorRate = 25;
+
     constructor(rowInd, colInd) {
         this.rowInd = rowInd;
         this.colInd = colInd;
+        this.isCorrect = false;
         this.getPosAndSize();
     }
 
     getPosAndSize() {
         this.width = SIZE.width / SIZE.columns;
         this.height = SIZE.height / SIZE.rows;
-        this.x = SIZE.x + this.colInd * this.width;
-        this.y = SIZE.y + this.rowInd * this.height;
+        if (this.isCorrect) {
+            this.x = SIZE.x + this.colInd * this.width;
+            this.y = SIZE.y + this.rowInd * this.height;
+        }
+    }
+
+    isClose() {
+        let correctLocX = SIZE.x + this.colInd * this.width;
+        let correctLocY = SIZE.y + this.rowInd * this.height;
+        if (Math.abs(correctLocX - this.x) <= this.errorRate
+            && Math.abs(correctLocY - this.y) <= this.errorRate) {
+            this.isCorrect = true;
+            this.x = correctLocX;
+            this.y = correctLocY;
+            return true;
+        }
+        return false;
     }
 
     draw(context) {
         context.beginPath();
-        // this.getPosAndSize();
+
+        this.getPosAndSize();
 
         context.drawImage(VIDEO,
             VIDEO.videoWidth * this.colInd / SIZE.columns,
@@ -109,6 +173,9 @@ class Piece {
             this.width,
             this.height,
         );
+        if (this.isCorrect) {
+            context.strokeStyle = 'green';
+        }
         context.rect(this.x, this.y, this.width, this.height);
         context.stroke();
     }
