@@ -1,3 +1,10 @@
+:root {
+    --easy: rgba(27, 188, 9, 0.63);
+    --medium: rgba(9, 167, 188, 0.63);
+    --hard: rgba(188, 30, 9, 0.68);
+    --transition: all .3s linear;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,7 +12,59 @@
 }
 
 body {
-    overflow: hidden;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    width: 100%;
+    font-family: sans-serif;
+}
+
+.difficulty-section {
+    left: 0;
+    top: 0;
+    width: 15em;
+    position: fixed;
+    background-color: white;
+    /*display: flex;*/
+    flex-direction: column;
+    align-items: center;
+    margin: auto;
+    border-bottom: solid black 5px;
+    display: none;
+}
+
+.difficulties {
+    list-style-type: none;
+    display: flex;
+    font-size: 1.5em;
+}
+
+.difficulties li {
+    padding: .5rem 1rem;
+    margin: .5rem 1rem;
+    border: 2px solid black;
+    border-radius: .5rem;
+    transition: var(--transition);
+    box-shadow: 0 5px black;
+    cursor: pointer;
+    position: relative;
+    top: 0;
+}
+
+.difficulties li:hover, .difficulties li.active {
+    box-shadow: 0 0 black;
+    top: 5px;
+}
+
+#easy {
+    background-color: var(--easy);
+}
+
+#medium {
+    background-color: var(--medium);
+}
+
+#hard {
+    background-color: var(--hard);
 }
 
 #mainCanvas {

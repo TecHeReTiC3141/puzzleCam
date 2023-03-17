@@ -17,6 +17,9 @@ let SIZE = {
 let PIECES = [];
 const SCALER = .8;
 
+let MENU_SECTION = document.querySelector('.menu');
+let TOP_OFFSET = MENU_SECTION.getBoundingClientRect().height;
+
 let SELECTED_SEGMENT = null;
 
 function getPosAndSize() {
@@ -38,7 +41,7 @@ camPromise.then(signal => {
     VIDEO.addEventListener('loadeddata', () => {
         getPosAndSize();
         initiatePieces(SIZE.rows, SIZE.columns);
-        randomizePosition();
+        randomizePositions();
         addEventListeners();
         console.log(PIECES);
         window.addEventListener('resize', () => {
@@ -48,8 +51,6 @@ camPromise.then(signal => {
         });
         updateCanvas();
     });
-
-
 }).catch(err => {
     console.log(`Camera error: ${err}`);
 })
@@ -59,9 +60,12 @@ function updateCanvas() {
     context.globalAlpha = .5;
     context.drawImage(VIDEO, SIZE.x, SIZE.y, SIZE.width, SIZE.height);
     context.globalAlpha = 1;
-    PIECES.forEach(p => {
+    PIECES.filter(p => p.isCorrect).forEach(p => {
         p.draw(context);
-    })
+    });
+    PIECES.filter(p => !p.isCorrect).forEach(p => {
+        p.draw(context);
+    });
     window.requestAnimationFrame(updateCanvas);
 }
 
@@ -76,7 +80,7 @@ function initiatePieces(rows, cols) {
     }
 }
 
-function randomizePosition() {
+function randomizePositions() {
     PIECES.forEach(p => {
         p.x = Math.random() * (canvas.width - p.width);
         p.y = Math.random() * (canvas.height - p.height);
@@ -85,7 +89,9 @@ function randomizePosition() {
 }
 
 function getSelected(event) {
-    for (let p of PIECES) {
+    event.y -= TOP_OFFSET;
+    for (let i = PIECES.length - 1; i >= 0; --i) {
+        let p = PIECES[i];
         if (!p.isCorrect &&
             p.x <= event.x && event.x <= p.x + p.width
             && p.y <= event.y && event.y <= p.y + p.height) {
@@ -98,6 +104,9 @@ function getSelected(event) {
 function mouseDownEvent(event) {
     SELECTED_SEGMENT = getSelected(event);
     if (SELECTED_SEGMENT != null) {
+        let selInd = PIECES.indexOf(SELECTED_SEGMENT);
+        PIECES.splice(selInd, 1);
+        PIECES.push(SELECTED_SEGMENT);
         SELECTED_SEGMENT.offset = {
             x: event.x - SELECTED_SEGMENT.x,
             y: event.y - SELECTED_SEGMENT.y,
@@ -106,6 +115,7 @@ function mouseDownEvent(event) {
 }
 
 function mouseMoveEvent(event) {
+    event.y -= TOP_OFFSET;
     if (SELECTED_SEGMENT != null) {
         SELECTED_SEGMENT.x = event.x - SELECTED_SEGMENT.offset.x;
         SELECTED_SEGMENT.y = event.y - SELECTED_SEGMENT.offset.y;
@@ -119,10 +129,50 @@ function mouseUpEvent() {
     SELECTED_SEGMENT = null;
 }
 
+function touchStartEvent(event) {
+    let loc = {
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY - TOP_OFFSET,
+    }
+    mouseDownEvent(loc);
+}
+
+function touchMoveEvent(event) {
+    let loc = {
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY - TOP_OFFSET,
+    }
+    mouseMoveEvent(loc);
+}
+
+function touchEndEvent() {
+    mouseUpEvent();
+}
+
 function addEventListeners() {
+    // For computers
     canvas.addEventListener('mousedown', mouseDownEvent);
     canvas.addEventListener('mousemove', mouseMoveEvent);
     canvas.addEventListener('mouseup', mouseUpEvent);
+    // For mobile devices
+    canvas.addEventListener('touchstart', touchStartEvent);
+    canvas.addEventListener('touchmove', touchMoveEvent);
+    canvas.addEventListener('touchend', touchEndEvent);
+}
+
+document.addEventListener('keydown', evt => {
+    console.log(evt.key, evt.code);
+    if (evt.code === 'KeyR') {
+        randomizePositions();
+    }
+});
+
+function setDifficulty() {
+
+}
+
+function restart() {
+
 }
 
 
@@ -175,6 +225,8 @@ class Piece {
         );
         if (this.isCorrect) {
             context.strokeStyle = 'green';
+        } else {
+            context.strokeStyle = 'black';
         }
         context.rect(this.x, this.y, this.width, this.height);
         context.stroke();
