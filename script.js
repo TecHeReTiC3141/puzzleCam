@@ -20,7 +20,15 @@ const SCALER = .8;
 let MENU_SECTION = document.querySelector('.menu');
 let TOP_OFFSET = MENU_SECTION.getBoundingClientRect().height;
 
+let START_TIME = null, END_TIME = null;
+let CURTIME = document.querySelector('.cur-time');
+let TIMEPASSED = CURTIME.querySelector('span');
+let YOUWIN = document.querySelector('.you-win');
+
+let DIFFICULTIES = document.querySelectorAll('.difficulties li');
+
 let SELECTED_SEGMENT = null;
+let WIN = false;
 
 function getPosAndSize() {
     let resizer = SCALER * Math.min(
@@ -41,7 +49,6 @@ camPromise.then(signal => {
     VIDEO.addEventListener('loadeddata', () => {
         getPosAndSize();
         initiatePieces(SIZE.rows, SIZE.columns);
-        randomizePositions();
         addEventListeners();
         console.log(PIECES);
         window.addEventListener('resize', () => {
@@ -101,6 +108,13 @@ function getSelected(event) {
     return null;
 }
 
+function win() {
+    WIN = true;
+    YOUWIN.innerHTML = `You win! your time is ${TIMEPASSED.innerHTML}`;
+    CURTIME.style.display = 'none';
+    YOUWIN.style.display = 'block'
+}
+
 function mouseDownEvent(event) {
     SELECTED_SEGMENT = getSelected(event);
     if (SELECTED_SEGMENT != null) {
@@ -125,6 +139,9 @@ function mouseMoveEvent(event) {
 function mouseUpEvent() {
     if (SELECTED_SEGMENT instanceof Piece && SELECTED_SEGMENT.isClose()) {
         SELECTED_SEGMENT.isCorrect = true;
+        if (PIECES.filter(p => p.isCorrect).length === PIECES.length) {
+            win();
+        }
     }
     SELECTED_SEGMENT = null;
 }
@@ -160,19 +177,48 @@ function addEventListeners() {
     canvas.addEventListener('touchend', touchEndEvent);
 }
 
-document.addEventListener('keydown', evt => {
-    console.log(evt.key, evt.code);
-    if (evt.code === 'KeyR') {
-        randomizePositions();
-    }
-});
-
 function setDifficulty() {
+    let curDifficulty = document.getElementById('difficulty').value;
+    switch(curDifficulty) {
+        case "easy":
+            initiatePieces(3, 3,);
+            break;
+        case "medium":
+            initiatePieces(4, 4,);
+            break;
+        case "hard":
+            initiatePieces(5, 5,);
+            break;
+        case "insane":
+            initiatePieces(7, 7,);
+            break;
+    }
 
 }
 
-function restart() {
 
+function restart() {
+    WIN = false;
+    randomizePositions();
+    START_TIME = Date.now();
+    CURTIME.style.display = 'block';
+    updateTime();
+    setInterval(updateTime, 1000);
+}
+
+const TIME_OPTIONS = {
+    timeZone: 'UTC',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+}
+
+function updateTime() {
+    if (START_TIME != null) {
+        let timePassed = new Date(Date.now() - START_TIME);
+        TIMEPASSED.innerHTML = timePassed.toLocaleString('ru', TIME_OPTIONS);
+
+    }
 }
 
 
@@ -184,6 +230,9 @@ class Piece {
         this.colInd = colInd;
         this.isCorrect = false;
         this.getPosAndSize();
+        this.x = SIZE.x + this.colInd * this.width;
+        this.y = SIZE.y + this.rowInd * this.height;
+
     }
 
     getPosAndSize() {

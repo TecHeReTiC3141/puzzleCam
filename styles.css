@@ -3,6 +3,7 @@
     --medium: rgba(9, 167, 188, 0.63);
     --hard: rgba(188, 30, 9, 0.68);
     --transition: all .3s linear;
+    --primary: rgba(6, 127, 149, 0.85);
 }
 
 * {
@@ -16,6 +17,36 @@ body {
     overscroll-behavior: none;
     width: 100%;
     font-family: sans-serif;
+}
+
+.cur-time {
+    display: none;
+}
+
+.you-win {
+    display: none;
+}
+
+.menu {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background-color: rgba(255, 255, 255, .75);
+    padding: 1rem;
+    border: .25em solid white;
+    border-radius: .5em;
+}
+
+.start {
+    background-color: var(--primary);
+    border-radius: .5em;
+    font-size: 1.5em;
+    border: none;
+    padding: .25em .5em;
+    color: white;
+    margin-top: .5em;
 }
 
 .difficulty-section {

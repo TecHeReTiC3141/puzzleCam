@@ -9,23 +9,25 @@
 <body>
 <div class="menu">
     <div class="controls">
-
-        <label for="difficulty">Difficulty</label>
-        <select id="difficulty" onselect="setDifficulty()">
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-            <option value="insane">Insane</option>
-        </select>
-        <button class="start" onclick="restart()">Start</button>
-    </div>
-    <div class="difficulty-section">
         <h3 class="choose">Choose your difficulty</h3>
         <ul class="difficulties">
             <li id="easy" class="active">Easy</li>
             <li id="medium">Medium</li>
             <li id="hard">Hard</li>
         </ul>
+<!--        <label for="difficulty">Difficulty</label>-->
+<!--        <select id="difficulty" onchange="setDifficulty()">-->
+<!--            <option value="easy">Easy</option>-->
+<!--            <option value="medium">Medium</option>-->
+<!--            <option value="hard">Hard</option>-->
+<!--            <option value="insane">Insane</option>-->
+<!--        </select>-->
+        <button class="start" onclick="restart()">Start</button>
+        <h3 class="cur-time">Current time: <span></span></h3>
+        <h2 class="you-win">You win, your time is </h2>
+    </div>
+    <div class="difficulty-section">
+
     </div>
 </div>
     <canvas id="mainCanvas"></canvas>
